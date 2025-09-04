@@ -1,33 +1,89 @@
-import React from "react";
+"use client";
+
+import * as z from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+
+// ✅ Skema validasi dengan Zod
+const loginSchema = z.object({
+  email: z.email("Email tidak valid"),
+  password: z.string().min(6, "Password minimal 6 karakter"),
+});
+
+type LoginSchema = z.infer<typeof loginSchema>;
 
 const LoginForm = () => {
+  const form = useForm<LoginSchema>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
+
+  const onSubmit = (data: LoginSchema) => {
+    console.log("Login data:", data);
+    // TODO: panggil API login di sini
+  };
+
   return (
-    <div className="w-full">
-      <h1 className="mb-4 text-xl font-semibold text-orange-700 dark:text-gray-200">
+    <div className="w-full max-w-sm mx-auto p-6 ">
+      <h1 className="mb-6 text-2xl font-bold text-center text-primary">
         Login
       </h1>
-      <label className="block text-sm">
-        <span className="text-gray-700 dark:text-gray-400">Email</span>
-        <input
-          className="block w-full mt-1 text-sm dark:border-gray-600 dark:bg-gray-700 focus:border-purple-400 focus:outline-none focus:shadow-outline-purple dark:text-gray-300 dark:focus:shadow-outline-gray form-input"
-          placeholder="Jane Doe"
-        />
-      </label>
-      <label className="block mt-4 text-sm">
-        <span className="text-gray-700 dark:text-gray-400">Password</span>
-        <input
-          className="block w-full mt-1 text-sm dark:border-gray-600 dark:bg-gray-700 focus:border-purple-400 focus:outline-none focus:shadow-outline-purple dark:text-gray-300 dark:focus:shadow-outline-gray form-input"
-          placeholder="***************"
-          type="password"
-        />
-      </label>
 
-      <a
-        className="block w-full px-4 py-2 mt-4 text-sm font-medium leading-5 text-center text-white transition-colors duration-150 bg-purple-600 border border-transparent rounded-lg active:bg-purple-600 hover:bg-purple-700 focus:outline-none focus:shadow-outline-purple"
-        href="../index.html"
-      >
-        Log in
-      </a>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          {/* Email */}
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Email</FormLabel>
+                <FormControl>
+                  <Input placeholder="example@mail.com" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Password */}
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Password</FormLabel>
+                <FormControl>
+                  <Input
+                    type="password"
+                    placeholder="***************"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Submit button */}
+          <Button type="submit" className="w-full">
+            Log in
+          </Button>
+        </form>
+      </Form>
     </div>
   );
 };
