@@ -12,17 +12,12 @@ import {
   useReactTable,
   VisibilityState,
 } from "@tanstack/react-table";
-import { ArrowUpDown, ChevronDown, MoreHorizontal, Plus } from "lucide-react";
-
+import { ChevronDown, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
@@ -35,91 +30,49 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Columns } from "./Columns";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { CategoryInterface, PaginatedInterface } from "@/lib/interfaces";
+import { deleteCategory, getCategory, postCategory } from "@/services/api";
+import { getAuthCookies } from "@/app/actions";
+import CategoryDialog from "../dialog/CategoryDialog";
+import { useForm } from "react-hook-form";
+import { categorySchema, CategorySchemaInfer } from "@/lib/schema";
+import { zodResolver } from "@hookform/resolvers/zod";
+import DeleteDialog from "../dialog/DeleteDialog";
 
-export type Payment = {
-  id: string;
-  amount: number;
-  status: "pending" | "processing" | "success" | "failed";
-  email: string;
-};
-const data: Payment[] = [
-  {
-    id: "m5gr84i9",
-    amount: 316,
-    status: "success",
-    email: "ken99@example.com",
-  },
-  {
-    id: "3u1reuv4",
-    amount: 242,
-    status: "success",
-    email: "Abe45@example.com",
-  },
-  {
-    id: "derv1ws0",
-    amount: 837,
-    status: "processing",
-    email: "Monserrat44@example.com",
-  },
-  {
-    id: "5kma53ae",
-    amount: 874,
-    status: "success",
-    email: "Silas22@example.com",
-  },
-  {
-    id: "bhqecj4p",
-    amount: 721,
-    status: "failed",
-    email: "carmella@example.com",
-  },
-  {
-    id: "derv1ws0",
-    amount: 837,
-    status: "processing",
-    email: "Monserrat44@example.com",
-  },
-  {
-    id: "5kma53ae",
-    amount: 874,
-    status: "success",
-    email: "Silas22@example.com",
-  },
-  {
-    id: "bhqecj4p",
-    amount: 721,
-    status: "failed",
-    email: "carmella@example.com",
-  },
-  {
-    id: "derv1ws0",
-    amount: 837,
-    status: "processing",
-    email: "Monserrat44@example.com",
-  },
-  {
-    id: "5kma53ae",
-    amount: 874,
-    status: "success",
-    email: "Silas22@example.com",
-  },
-  {
-    id: "bhqecj4p",
-    amount: 721,
-    status: "failed",
-    email: "carmella@example.com",
-  },
-];
+interface DataTableProps {
+  data: CategoryInterface[];
+  meta: PaginatedInterface;
+}
 
-export function DataTable() {
+export function DataTable({ data, meta }: DataTableProps) {
+  const [dataTable, setDataTable] = useState<CategoryInterface[]>(data);
+  const [paginated, setPaginated] = useState<PaginatedInterface>(meta);
+  const [search, setSearch] = useState<string>("");
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
+  const [dialog, setDialog] = useState({
+    category: false,
+    delete: false,
+  });
+  const [idCategory, setIdCategory] = useState<number>();
   const table = useReactTable({
-    data,
-    columns: Columns,
+    data: dataTable,
+    columns: Columns({
+      onEdit: (category) => {
+        // setSelectedCategory(category);
+        handleDialog("category");
+      },
+      onDelete: (category) => {
+        // setSelectedDeleteId(category.id);
+        setIdCategory(category.id);
+        handleDialog("delete");
+      },
+    }),
+    manualPagination: true,
+    pageCount: meta.lastPage,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
@@ -135,24 +88,93 @@ export function DataTable() {
       rowSelection,
     },
   });
+  const handleDialog = (key: "category" | "delete") => {
+    setDialog((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
+  };
+
+  const handleCloseDialog = () => setDialog({ category: false, delete: false });
+  const searchData = async () => {
+    try {
+      const token = await getAuthCookies();
+      const response = await getCategory(token!, search, paginated.currentPage);
+      setDataTable(response.data.data.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const form = useForm<CategorySchemaInfer>({
+    resolver: zodResolver(categorySchema),
+    defaultValues: {
+      name: "",
+    },
+  });
+
+  const { setError } = form;
+  const onSubmit = async (data: CategorySchemaInfer) => {
+    try {
+      const token = await getAuthCookies();
+      await postCategory(token!, data);
+      await searchData();
+      handleCloseDialog();
+      form.reset();
+    } catch (error: any) {
+      const message =
+        error.response.data.message ?? "Terjadi kesalahan. Silakan coba lagi.";
+      setError("root", {
+        type: "server",
+        message,
+      });
+    }
+  };
+  const onDelete = async () => {
+    try {
+      const token = await getAuthCookies();
+      await deleteCategory(token!, idCategory!);
+      await searchData();
+      handleCloseDialog();
+      form.reset();
+    } catch (error: any) {
+      const message =
+        error.response.data.message ?? "Terjadi kesalahan. Silakan coba lagi.";
+      setError("root", {
+        type: "server",
+        message,
+      });
+    }
+  };
+
+  useEffect(() => {
+    searchData();
+  }, [search, paginated.currentPage]);
 
   return (
     <div className="w-full ">
       <div className="flex items-center flex-wrap gap-4 justify-between py-4">
         <Input
-          placeholder="Filter emails..."
-          value={(table.getColumn("email")?.getFilterValue() as string) ?? ""}
-          onChange={(event) =>
-            table.getColumn("email")?.setFilterValue(event.target.value)
-          }
+          placeholder="Cari nama kategori..."
+          value={search}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setPaginated((prev) => ({
+              ...prev,
+              currentPage: 1,
+            }));
+          }}
           className="w-full lg:max-w-sm"
         />
-        <div className="w-full flex justify-between lg:max-w-60">
-          <Button variant="default">
-            Add Data
-            <Plus />
-          </Button>
-          <DropdownMenu>
+        {/* <div className="w-full lg:ml-auto lg:max-w-50"> */}
+        <Button
+          onClick={() => handleDialog("category")}
+          className="ml-auto lg:ml-0"
+        >
+          Tambah Data
+          <Plus />
+        </Button>
+        {/* <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline">
                 Columns <ChevronDown />
@@ -177,8 +199,8 @@ export function DataTable() {
                   );
                 })}
             </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+          </DropdownMenu> */}
+        {/* </div> */}
       </div>
       <div className="overflow-hidden rounded-md border">
         <Table>
@@ -230,26 +252,52 @@ export function DataTable() {
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center justify-end space-x-2 py-4">
+      <div className="flex items-center justify-between py-4">
+        <p className="text-sm text-gray-600">
+          Page {paginated.currentPage} of {paginated.lastPage} — Total{" "}
+          {paginated.total} items
+        </p>
         <div className="space-x-2">
           <Button
             variant="outline"
             size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
+            onClick={() =>
+              setPaginated((prev) => ({
+                ...prev,
+                currentPage: prev.currentPage - 1,
+              }))
+            }
+            disabled={paginated.currentPage === 1}
           >
             Previous
           </Button>
           <Button
             variant="outline"
             size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
+            onClick={() =>
+              setPaginated((prev) => ({
+                ...prev,
+                currentPage: prev.currentPage + 1,
+              }))
+            }
+            disabled={paginated.currentPage === paginated.lastPage}
           >
             Next
           </Button>
         </div>
       </div>
+
+      <CategoryDialog
+        isOpen={dialog.category}
+        handleDialog={() => handleDialog("category")}
+        form={form}
+        onSubmit={onSubmit}
+      />
+      <DeleteDialog
+        isOpen={dialog.delete}
+        handleDialog={() => handleDialog("delete")}
+        handleDelete={onDelete}
+      />
     </div>
   );
 }

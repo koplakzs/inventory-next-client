@@ -12,12 +12,25 @@ import {
   MenubarSeparator,
   MenubarTrigger,
 } from "./ui/menubar";
+import api from "@/lib/axios";
+import { deleteAuthCookies, getAuthCookies } from "@/app/actions";
+import { useRouter } from "next/navigation";
+import { postLogout } from "@/services/api";
 
 export default function Navbar({
   toggleSidebar,
 }: {
   toggleSidebar: () => void;
 }) {
+  const router = useRouter();
+
+  const logout = async () => {
+    const token = await getAuthCookies();
+    await postLogout(token!);
+
+    await deleteAuthCookies();
+    router.push("/");
+  };
   return (
     <header className="z-10 py-4 bg-white shadow-md dark:bg-gray-800">
       <div className="container flex items-center justify-between px-6  text-purple-600 dark:text-purple-300">
@@ -43,7 +56,7 @@ export default function Navbar({
             </MenubarTrigger>
 
             <MenubarContent className="me-5">
-              <MenubarItem>Logout</MenubarItem>
+              <MenubarItem onClick={logout}>Logout</MenubarItem>
             </MenubarContent>
           </MenubarMenu>
         </Menubar>

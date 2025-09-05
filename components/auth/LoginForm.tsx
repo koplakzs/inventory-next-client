@@ -13,17 +13,14 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-
-// ✅ Skema validasi dengan Zod
-const loginSchema = z.object({
-  email: z.email("Email tidak valid"),
-  password: z.string().min(6, "Password minimal 6 karakter"),
-});
-
-type LoginSchema = z.infer<typeof loginSchema>;
+import { loginSchema, LoginSchemaInfer } from "@/lib/schema";
+import { setAuthCookies } from "@/app/actions";
+import { useRouter } from "next/navigation";
+import { postLogin } from "@/services/api";
 
 const LoginForm = () => {
-  const form = useForm<LoginSchema>({
+  const router = useRouter();
+  const form = useForm<LoginSchemaInfer>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
       email: "",
@@ -31,11 +28,33 @@ const LoginForm = () => {
     },
   });
 
-  const onSubmit = (data: LoginSchema) => {
-    console.log("Login data:", data);
-    // TODO: panggil API login di sini
+  const {
+    handleSubmit,
+    setError,
+    formState: { isSubmitting, errors },
+  } = form;
+  const onSubmit = async (data: LoginSchemaInfer) => {
+    try {
+      const res = await postLogin(data);
+      if (!res.data.success) {
+        setError("root", {
+          type: "server",
+          message: res.data.message,
+        });
+        return;
+      }
+      const { user, token } = res.data.data!;
+      await setAuthCookies(token, user);
+      router.push("/");
+    } catch (error: any) {
+      const message =
+        error.response.data.message ?? "Terjadi kesalahan. Silakan coba lagi.";
+      setError("root", {
+        type: "server",
+        message,
+      });
+    }
   };
-
   return (
     <div className="w-full max-w-sm mx-auto p-6 ">
       <h1 className="mb-6 text-2xl font-bold text-center text-primary">
@@ -43,7 +62,7 @@ const LoginForm = () => {
       </h1>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {/* Email */}
           <FormField
             control={form.control}
@@ -77,10 +96,14 @@ const LoginForm = () => {
               </FormItem>
             )}
           />
-
+          {errors.root && (
+            <p className="text-sm text-red-500 text-center">
+              {errors.root.message}
+            </p>
+          )}
           {/* Submit button */}
-          <Button type="submit" className="w-full">
-            Log in
+          <Button type="submit" className="w-full" disabled={isSubmitting}>
+            {isSubmitting ? "Logging in..." : "Log in"}
           </Button>
         </form>
       </Form>
