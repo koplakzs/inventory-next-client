@@ -63,12 +63,10 @@ export default function Sidebar({
 
   return (
     <>
-      {/* Desktop Sidebar */}
       <aside className="z-20 hidden w-64 overflow-y-auto bg-white dark:bg-gray-800 md:block flex-shrink-0">
         {renderMenu()}
       </aside>
 
-      {/* Backdrop */}
       <div
         onClick={handleSidebar}
         className={`fixed inset-0 z-40 bg-black/50 transition-opacity duration-300 ${
@@ -76,7 +74,6 @@ export default function Sidebar({
         }`}
       />
 
-      {/* Mobile Sidebar */}
       <aside
         className={`fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-800 shadow-lg transform transition-transform duration-500 ease-in-out ${
           isSidebarOpen ? "translate-x-0" : "-translate-x-full"

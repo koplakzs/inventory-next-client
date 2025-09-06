@@ -1,6 +1,5 @@
 "use client";
 
-import * as z from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -56,7 +55,6 @@ const LoginForm = () => {
 
       <Form {...form}>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          {/* Email */}
           <FormField
             control={form.control}
             name="email"
@@ -71,7 +69,6 @@ const LoginForm = () => {
             )}
           />
 
-          {/* Password */}
           <FormField
             control={form.control}
             name="password"
@@ -94,7 +91,6 @@ const LoginForm = () => {
               {errors.root.message}
             </p>
           )}
-          {/* Submit button */}
           <Button type="submit" className="w-full" disabled={isSubmitting}>
             {isSubmitting ? "Logging in..." : "Log in"}
           </Button>

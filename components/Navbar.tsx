@@ -1,7 +1,6 @@
 "use client";
 
 import { AlignJustify } from "lucide-react";
-import { useState } from "react";
 import { Button } from "./ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import {
@@ -9,10 +8,8 @@ import {
   MenubarContent,
   MenubarItem,
   MenubarMenu,
-  MenubarSeparator,
   MenubarTrigger,
 } from "./ui/menubar";
-import api from "@/lib/axios";
 import { deleteAuthCookies, getAuthCookies } from "@/app/actions";
 import { useRouter } from "next/navigation";
 import { postLogout } from "@/services/api";
@@ -34,7 +31,6 @@ export default function Navbar({
   return (
     <header className="z-10 py-4 bg-white shadow-md dark:bg-gray-800">
       <div className="container flex items-center justify-between px-6  text-purple-600 dark:text-purple-300">
-        {/* Mobile Hamburger */}
         <Button
           onClick={toggleSidebar}
           className="p-1  rounded-md md:hidden hover:cursor-pointer bg-purple-600 hover:bg-purple-700"
@@ -42,7 +38,6 @@ export default function Navbar({
           <AlignJustify />
         </Button>
 
-        {/* Search Input */}
         <div className="flex-1 max-w-xl mx-6">
           <p className="font-bold">Inventory App</p>
         </div>
