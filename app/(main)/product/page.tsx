@@ -1,12 +1,10 @@
-import { deleteAuthCookies, getAuthCookies } from "@/app/actions";
+import { getAuthCookies } from "@/app/actions";
 import { DataTable } from "@/components/product/DataTable";
-import { getAllCategory, getCategory, getProduct } from "@/services/api";
+import { getAllCategory, getProduct } from "@/services/api";
 
 async function ProductData() {
   const token = await getAuthCookies();
-  if (!token) {
-    await deleteAuthCookies();
-  }
+
   const responseProduct = await getProduct(token!);
   const responseCategory = await getAllCategory(token!);
   return {

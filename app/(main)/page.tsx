@@ -2,16 +2,14 @@ import CardDashboard from "@/components/dashboard/CardDashboard";
 import { CardItem } from "@/lib/interfaces";
 import { Box, Calculator, Grip } from "lucide-react";
 
-import { deleteAuthCookies, getAuthCookies } from "../actions";
+import { getAuthCookies } from "../actions";
 import { getDashboard } from "@/services/api";
 import { ChartBar } from "@/components/dashboard/ChartBar";
 import TableProduct from "@/components/dashboard/TableProduct";
 
 async function DashboardData() {
   const token = await getAuthCookies();
-  if (!token) {
-    await deleteAuthCookies();
-  }
+
   const response = await getDashboard(token!);
   return response.data.data;
 }

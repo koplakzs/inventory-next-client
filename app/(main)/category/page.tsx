@@ -1,12 +1,10 @@
-import { deleteAuthCookies, getAuthCookies } from "@/app/actions";
+import { getAuthCookies } from "@/app/actions";
 import { DataTable } from "@/components/category/DataTable";
 import { getCategory } from "@/services/api";
 
 async function CategoryData() {
   const token = await getAuthCookies();
-  if (!token) {
-    await deleteAuthCookies();
-  }
+
   const response = await getCategory(token!);
   return response.data.data;
 }
