@@ -23,10 +23,12 @@ export default function Navbar({
 
   const logout = async () => {
     const token = await getAuthCookies();
-    await postLogout(token!);
+    if (token) {
+      await postLogout(token);
+    }
 
-    await deleteAuthCookies();
-    router.push("/");
+    await deleteAuthCookies(); // ini sekarang beneran clear cookies
+    router.push("/auth");
   };
   return (
     <header className="z-10 py-4 bg-white shadow-md dark:bg-gray-800">

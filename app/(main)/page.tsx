@@ -2,7 +2,7 @@ import CardDashboard from "@/components/dashboard/CardDashboard";
 import { CardItem } from "@/lib/interfaces";
 import { Box, Calculator, Grip } from "lucide-react";
 
-import { getAuthCookies } from "../actions";
+import { deleteAuthCookies, getAuthCookies } from "../actions";
 import { getDashboard } from "@/services/api";
 import { ChartBar } from "@/components/dashboard/ChartBar";
 import TableProduct from "@/components/dashboard/TableProduct";
@@ -10,9 +10,9 @@ import TableProduct from "@/components/dashboard/TableProduct";
 async function DashboardData() {
   const token = await getAuthCookies();
   if (!token) {
-    throw new Error("No token found");
+    await deleteAuthCookies();
   }
-  const response = await getDashboard(token);
+  const response = await getDashboard(token!);
   return response.data.data;
 }
 

@@ -1,14 +1,14 @@
-import { getAuthCookies } from "@/app/actions";
+import { deleteAuthCookies, getAuthCookies } from "@/app/actions";
 import { DataTable } from "@/components/product/DataTable";
 import { getAllCategory, getCategory, getProduct } from "@/services/api";
 
 async function ProductData() {
   const token = await getAuthCookies();
   if (!token) {
-    throw new Error("No token found");
+    await deleteAuthCookies();
   }
-  const responseProduct = await getProduct(token);
-  const responseCategory = await getAllCategory(token);
+  const responseProduct = await getProduct(token!);
+  const responseCategory = await getAllCategory(token!);
   return {
     dataProduct: responseProduct.data.data,
     dataCategory: responseCategory.data.data,
