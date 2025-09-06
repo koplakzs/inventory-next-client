@@ -36,8 +36,8 @@ import "../globals.css";
 import LayoutWrapper from "@/components/LayoutWrapper";
 
 export const metadata = {
-  title: "Windmill Dashboard",
-  description: "Dashboard template in Next.js",
+  title: "Inventory Dashboard",
+  description: "Dashboard",
 };
 
 export default function RootLayout({

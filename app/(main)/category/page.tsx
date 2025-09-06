@@ -13,7 +13,6 @@ async function CategoryData() {
 
 export default async function Category() {
   const data = await CategoryData();
-  console.log(data);
   return (
     <section>
       <h2 className="my-6 text-2xl font-semibold text-gray-700 dark:text-gray-200">

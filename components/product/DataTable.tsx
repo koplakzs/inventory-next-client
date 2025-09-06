@@ -35,91 +35,95 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Columns } from "./Columns";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import {
+  CategoryInterface,
+  PaginatedInterface,
+  ProductInterface,
+} from "@/lib/interfaces";
+import { getAuthCookies } from "@/app/actions";
+import {
+  deleteProduct,
+  getProduct,
+  postProduct,
+  putProduct,
+} from "@/services/api";
+import { useForm } from "react-hook-form";
+// import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  ProductFormType,
+  productSchema,
+  ProductSchemaInfer,
+  updateProductSchema,
+} from "@/lib/schema";
+import DeleteDialog from "../dialog/DeleteDialog";
+import ProductPictureDialog from "../dialog/ProductPictureDialog";
+import ProductDialog from "../dialog/ProductDialog";
+import { zodResolver } from "@hookform/resolvers/zod";
+import z from "zod";
 
-export type Payment = {
-  id: string;
-  amount: number;
-  status: "pending" | "processing" | "success" | "failed";
-  email: string;
-};
-const data: Payment[] = [
-  {
-    id: "m5gr84i9",
-    amount: 316,
-    status: "success",
-    email: "ken99@example.com",
-  },
-  {
-    id: "3u1reuv4",
-    amount: 242,
-    status: "success",
-    email: "Abe45@example.com",
-  },
-  {
-    id: "derv1ws0",
-    amount: 837,
-    status: "processing",
-    email: "Monserrat44@example.com",
-  },
-  {
-    id: "5kma53ae",
-    amount: 874,
-    status: "success",
-    email: "Silas22@example.com",
-  },
-  {
-    id: "bhqecj4p",
-    amount: 721,
-    status: "failed",
-    email: "carmella@example.com",
-  },
-  {
-    id: "derv1ws0",
-    amount: 837,
-    status: "processing",
-    email: "Monserrat44@example.com",
-  },
-  {
-    id: "5kma53ae",
-    amount: 874,
-    status: "success",
-    email: "Silas22@example.com",
-  },
-  {
-    id: "bhqecj4p",
-    amount: 721,
-    status: "failed",
-    email: "carmella@example.com",
-  },
-  {
-    id: "derv1ws0",
-    amount: 837,
-    status: "processing",
-    email: "Monserrat44@example.com",
-  },
-  {
-    id: "5kma53ae",
-    amount: 874,
-    status: "success",
-    email: "Silas22@example.com",
-  },
-  {
-    id: "bhqecj4p",
-    amount: 721,
-    status: "failed",
-    email: "carmella@example.com",
-  },
-];
+interface DataTableProps {
+  data: ProductInterface[];
+  meta: PaginatedInterface;
+  categories: CategoryInterface[];
+}
 
-export function DataTable() {
+export function DataTable({ data, meta, categories }: DataTableProps) {
+  // const [sorting, setSorting] = useState<SortingState>([]);
+  // const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  // const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+  // const [rowSelection, setRowSelection] = useState({});
+  // const table = useReactTable({
+  //   data,
+  //   columns: Columns,
+  //   onSortingChange: setSorting,
+  //   onColumnFiltersChange: setColumnFilters,
+  //   getCoreRowModel: getCoreRowModel(),
+  //   getPaginationRowModel: getPaginationRowModel(),
+  //   getSortedRowModel: getSortedRowModel(),
+  //   getFilteredRowModel: getFilteredRowModel(),
+  //   onColumnVisibilityChange: setColumnVisibility,
+  //   onRowSelectionChange: setRowSelection,
+  //   state: {
+  //     sorting,
+  //     columnFilters,
+  //     columnVisibility,
+  //     rowSelection,
+  //   },
+  // });
+  const [dataTable, setDataTable] = useState<ProductInterface[]>(data);
+  const [paginated, setPaginated] = useState<PaginatedInterface>(meta);
+  const [search, setSearch] = useState<string>("");
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
+  const [dialog, setDialog] = useState({
+    product: false,
+    delete: false,
+    edit: false,
+    picture: false,
+  });
+  const [idProduct, setIdProduct] = useState<number>();
+  const [images, setImages] = useState<string[]>([]);
   const table = useReactTable({
-    data,
-    columns: Columns,
+    data: dataTable,
+    columns: Columns({
+      onEdit: (product) => {
+        setIdProduct(product.id);
+        handleDialog("edit");
+      },
+      onDelete: (product) => {
+        setIdProduct(product.id);
+        handleDialog("delete");
+      },
+      onPicture: (images) => {
+        setImages(images);
+        handleDialog("picture");
+      },
+    }),
+    manualPagination: true,
+    pageCount: meta.lastPage,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
@@ -135,21 +139,125 @@ export function DataTable() {
       rowSelection,
     },
   });
+  const handleDialog = (key: "product" | "delete" | "edit" | "picture") => {
+    setDialog((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
+  };
+
+  const handleCloseDialog = () =>
+    setDialog({ product: false, delete: false, edit: false, picture: false });
+  const fetchData = async () => {
+    try {
+      const token = await getAuthCookies();
+      const response = await getProduct(token!, search, paginated.currentPage);
+      setDataTable(response.data.data.data);
+      setPaginated(response.data.data.meta);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const form = useForm<ProductFormType>({
+    resolver: zodResolver(
+      dialog.edit ? updateProductSchema : productSchema
+    ) as any,
+    defaultValues: {
+      name: "",
+      code: "",
+      category_id: 0,
+      stock: 0,
+      images: [],
+    },
+  });
+
+  const { setError } = form;
+  const onSubmit = async (data: ProductFormType) => {
+    try {
+      const token = await getAuthCookies();
+      await postProduct(token!, data);
+      await fetchData();
+      handleCloseDialog();
+      form.reset();
+    } catch (error: any) {
+      const message =
+        error.response.data.message ?? "Terjadi kesalahan. Silakan coba lagi.";
+      setError("root", {
+        type: "server",
+        message,
+      });
+    }
+  };
+  const onDelete = async () => {
+    try {
+      const token = await getAuthCookies();
+      await deleteProduct(token!, idProduct!);
+      await fetchData();
+      handleCloseDialog();
+      form.reset();
+    } catch (error: any) {
+      const message =
+        error.response.data.message ?? "Terjadi kesalahan. Silakan coba lagi.";
+      setError("root", {
+        type: "server",
+        message,
+      });
+    }
+  };
+  const onEdit = async (data: ProductFormType) => {
+    try {
+      const token = await getAuthCookies();
+      await putProduct(token!, idProduct!, data);
+      await fetchData();
+      handleCloseDialog();
+      form.reset();
+    } catch (error: any) {
+      const message =
+        error.response.data.message ?? "Terjadi kesalahan. Silakan coba lagi.";
+      setError("root", {
+        type: "server",
+        message,
+      });
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, [search, paginated.currentPage]);
+
+  useEffect(() => {
+    if (!dialog.edit) {
+      form.reset();
+    } else {
+      const data = dataTable.find((value) => value.id === idProduct);
+      if (data) {
+        form.setValue("name", data.name);
+        form.setValue("code", data.code);
+        form.setValue("category_id", data.category.id);
+        form.setValue("stock", data.stock);
+      }
+    }
+  }, [dialog.edit]);
 
   return (
     <div className="w-full ">
       <div className="flex items-center flex-wrap gap-4 justify-between py-4">
         <Input
-          placeholder="Filter emails..."
-          value={(table.getColumn("email")?.getFilterValue() as string) ?? ""}
-          onChange={(event) =>
-            table.getColumn("email")?.setFilterValue(event.target.value)
-          }
+          placeholder="Cari kode atau nama produk..."
+          value={search}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setPaginated((prev) => ({
+              ...prev,
+              currentPage: 1,
+            }));
+          }}
           className="w-full lg:max-w-sm"
         />
-        <div className="w-full flex justify-between lg:max-w-60">
-          <Button variant="default">
-            Add Data
+        <div className="ml-auto lg:ml-0 space-x-5">
+          <Button onClick={() => handleDialog("product")}>
+            Tambah Data
             <Plus />
           </Button>
           <DropdownMenu>
@@ -230,26 +338,67 @@ export function DataTable() {
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center justify-end space-x-2 py-4">
+      <div className="flex items-center justify-between py-4">
+        <p className="text-sm text-gray-600">
+          Page {paginated.currentPage} of {paginated.lastPage} — Total{" "}
+          {paginated.total} items
+        </p>
         <div className="space-x-2">
           <Button
             variant="outline"
             size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
+            onClick={() =>
+              setPaginated((prev) => ({
+                ...prev,
+                currentPage: prev.currentPage - 1,
+              }))
+            }
+            disabled={paginated.currentPage === 1}
           >
             Previous
           </Button>
           <Button
             variant="outline"
             size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
+            onClick={() =>
+              setPaginated((prev) => ({
+                ...prev,
+                currentPage: prev.currentPage + 1,
+              }))
+            }
+            disabled={paginated.currentPage === paginated.lastPage}
           >
             Next
           </Button>
         </div>
       </div>
+
+      <ProductDialog
+        isOpen={dialog.product}
+        handleDialog={() => handleDialog("product")}
+        form={form}
+        onSubmit={onSubmit}
+        categories={categories}
+      />
+      <ProductDialog
+        isOpen={dialog.edit}
+        handleDialog={() => handleDialog("edit")}
+        form={form}
+        onSubmit={onEdit}
+        categories={categories}
+        isEdit
+      />
+
+      <DeleteDialog
+        isOpen={dialog.delete}
+        handleDialog={() => handleDialog("delete")}
+        handleDelete={onDelete}
+      />
+      <ProductPictureDialog
+        isOpen={dialog.picture}
+        handleDialog={() => handleDialog("picture")}
+        images={images}
+      />
     </div>
   );
 }

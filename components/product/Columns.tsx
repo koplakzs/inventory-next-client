@@ -1,5 +1,4 @@
 import { ColumnDef } from "@tanstack/react-table";
-import { Payment } from "./DataTable";
 import { Button } from "../ui/button";
 import { ArrowUpDown, MoreHorizontal } from "lucide-react";
 import {
@@ -9,8 +8,19 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
+import { CategoryInterface, ProductInterface } from "@/lib/interfaces";
 
-export const Columns: ColumnDef<Payment>[] = [
+interface ColumnActionsProps {
+  onEdit: (row: ProductInterface) => void;
+  onDelete: (row: ProductInterface) => void;
+  onPicture: (row: string[]) => void;
+}
+
+export const Columns = ({
+  onEdit,
+  onDelete,
+  onPicture,
+}: ColumnActionsProps): ColumnDef<ProductInterface>[] => [
   {
     id: "no",
     header: "No",
@@ -19,45 +29,73 @@ export const Columns: ColumnDef<Payment>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: "status",
-    header: "Status",
-    cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("status")}</div>
-    ),
-  },
-  {
-    accessorKey: "email",
+    accessorKey: "code",
     header: ({ column }) => {
       return (
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          Email
+          Kode Produk
           <ArrowUpDown />
         </Button>
       );
     },
-    cell: ({ row }) => <div className="lowercase">{row.getValue("email")}</div>,
+    cell: ({ row }) => <div>{row.getValue("code")}</div>,
   },
   {
-    accessorKey: "amount",
-    header: () => <div className="text-right">Amount</div>,
+    accessorKey: "name",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Nama Produk
+          <ArrowUpDown />
+        </Button>
+      );
+    },
+    cell: ({ row }) => <div className="lowercase">{row.getValue("name")}</div>,
+  },
+  {
+    accessorKey: "category",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Kategori Produk
+          <ArrowUpDown />
+        </Button>
+      );
+    },
     cell: ({ row }) => {
-      const amount = parseFloat(row.getValue("amount"));
-
-      // Format the amount as a dollar amount
-      const formatted = new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency: "USD",
-      }).format(amount);
-
-      return <div className="text-right font-medium">{formatted}</div>;
+      const category: CategoryInterface = row.getValue("category");
+      return <div className="lowercase">{category.name}</div>;
     },
   },
   {
+    accessorKey: "stock",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Stok Produk
+          <ArrowUpDown />
+        </Button>
+      );
+    },
+    cell: ({ row }) => <div className="lowercase">{row.getValue("stock")}</div>,
+  },
+
+  {
     id: "actions",
     enableHiding: false,
+    header: "Aksi",
     cell: ({ row }) => {
       const payment = row.original;
 
@@ -70,10 +108,18 @@ export const Columns: ColumnDef<Payment>[] = [
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem>Update Data</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onPicture(row.original.images)}>
+              Lihat Gambar
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onEdit(row.original)}>
+              Perbarui Data
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem variant="destructive">
-              Delete Data
+            <DropdownMenuItem
+              onClick={() => onDelete(row.original)}
+              variant="destructive"
+            >
+              Hapus Data
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

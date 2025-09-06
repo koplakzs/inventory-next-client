@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  ColumnDef,
   ColumnFiltersState,
   flexRender,
   getCoreRowModel,
@@ -12,14 +11,9 @@ import {
   useReactTable,
   VisibilityState,
 } from "@tanstack/react-table";
-import { ChevronDown, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -32,7 +26,12 @@ import {
 import { Columns } from "./Columns";
 import { useEffect, useState } from "react";
 import { CategoryInterface, PaginatedInterface } from "@/lib/interfaces";
-import { deleteCategory, getCategory, postCategory } from "@/services/api";
+import {
+  deleteCategory,
+  getCategory,
+  postCategory,
+  putCategory,
+} from "@/services/api";
 import { getAuthCookies } from "@/app/actions";
 import CategoryDialog from "../dialog/CategoryDialog";
 import { useForm } from "react-hook-form";
@@ -56,6 +55,7 @@ export function DataTable({ data, meta }: DataTableProps) {
   const [dialog, setDialog] = useState({
     category: false,
     delete: false,
+    edit: false,
   });
   const [idCategory, setIdCategory] = useState<number>();
   const table = useReactTable({
@@ -63,7 +63,8 @@ export function DataTable({ data, meta }: DataTableProps) {
     columns: Columns({
       onEdit: (category) => {
         // setSelectedCategory(category);
-        handleDialog("category");
+        setIdCategory(category.id);
+        handleDialog("edit");
       },
       onDelete: (category) => {
         // setSelectedDeleteId(category.id);
@@ -88,19 +89,21 @@ export function DataTable({ data, meta }: DataTableProps) {
       rowSelection,
     },
   });
-  const handleDialog = (key: "category" | "delete") => {
+  const handleDialog = (key: "category" | "delete" | "edit") => {
     setDialog((prev) => ({
       ...prev,
       [key]: !prev[key],
     }));
   };
 
-  const handleCloseDialog = () => setDialog({ category: false, delete: false });
-  const searchData = async () => {
+  const handleCloseDialog = () =>
+    setDialog({ category: false, delete: false, edit: false });
+  const fetchData = async () => {
     try {
       const token = await getAuthCookies();
       const response = await getCategory(token!, search, paginated.currentPage);
       setDataTable(response.data.data.data);
+      setPaginated(response.data.data.meta);
     } catch (error) {
       console.log(error);
     }
@@ -118,7 +121,7 @@ export function DataTable({ data, meta }: DataTableProps) {
     try {
       const token = await getAuthCookies();
       await postCategory(token!, data);
-      await searchData();
+      await fetchData();
       handleCloseDialog();
       form.reset();
     } catch (error: any) {
@@ -134,7 +137,23 @@ export function DataTable({ data, meta }: DataTableProps) {
     try {
       const token = await getAuthCookies();
       await deleteCategory(token!, idCategory!);
-      await searchData();
+      await fetchData();
+      handleCloseDialog();
+      form.reset();
+    } catch (error: any) {
+      const message =
+        error.response.data.message ?? "Terjadi kesalahan. Silakan coba lagi.";
+      setError("root", {
+        type: "server",
+        message,
+      });
+    }
+  };
+  const onEdit = async (data: CategorySchemaInfer) => {
+    try {
+      const token = await getAuthCookies();
+      await putCategory(token!, idCategory!, data);
+      await fetchData();
       handleCloseDialog();
       form.reset();
     } catch (error: any) {
@@ -148,8 +167,18 @@ export function DataTable({ data, meta }: DataTableProps) {
   };
 
   useEffect(() => {
-    searchData();
+    fetchData();
   }, [search, paginated.currentPage]);
+
+  useEffect(() => {
+    if (!dialog.edit) {
+      form.reset();
+    } else {
+      const data = dataTable.find((value) => value.id === idCategory);
+
+      form.setValue("name", data?.name!);
+    }
+  }, [dialog.edit]);
 
   return (
     <div className="w-full ">
@@ -166,7 +195,6 @@ export function DataTable({ data, meta }: DataTableProps) {
           }}
           className="w-full lg:max-w-sm"
         />
-        {/* <div className="w-full lg:ml-auto lg:max-w-50"> */}
         <Button
           onClick={() => handleDialog("category")}
           className="ml-auto lg:ml-0"
@@ -174,33 +202,6 @@ export function DataTable({ data, meta }: DataTableProps) {
           Tambah Data
           <Plus />
         </Button>
-        {/* <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline">
-                Columns <ChevronDown />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {table
-                .getAllColumns()
-                .filter((column) => column.getCanHide())
-                .map((column) => {
-                  return (
-                    <DropdownMenuCheckboxItem
-                      key={column.id}
-                      className="capitalize"
-                      checked={column.getIsVisible()}
-                      onCheckedChange={(value) =>
-                        column.toggleVisibility(!!value)
-                      }
-                    >
-                      {column.id}
-                    </DropdownMenuCheckboxItem>
-                  );
-                })}
-            </DropdownMenuContent>
-          </DropdownMenu> */}
-        {/* </div> */}
       </div>
       <div className="overflow-hidden rounded-md border">
         <Table>
@@ -292,6 +293,13 @@ export function DataTable({ data, meta }: DataTableProps) {
         handleDialog={() => handleDialog("category")}
         form={form}
         onSubmit={onSubmit}
+      />
+      <CategoryDialog
+        isOpen={dialog.edit}
+        handleDialog={() => handleDialog("edit")}
+        form={form}
+        onSubmit={onEdit}
+        isEdit
       />
       <DeleteDialog
         isOpen={dialog.delete}

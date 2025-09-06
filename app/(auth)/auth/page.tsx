@@ -1,6 +1,6 @@
 import LoginForm from "@/components/auth/LoginForm";
 import Image from "next/image";
-
+import OfficePicture from "@/public/assets/login-office.jpeg";
 export default function Auth() {
   return (
     <div className="flex items-center min-h-screen p-6 bg-gray-50 dark:bg-gray-900">
@@ -10,18 +10,8 @@ export default function Auth() {
             <Image
               aria-hidden="true"
               className="object-cover w-full h-full dark:hidden"
-              src="/assets/login-office.jpeg"
+              src={OfficePicture}
               alt="Office"
-              width={500}
-              height={500}
-            />
-            <Image
-              aria-hidden="true"
-              className="hidden object-cover w-full h-full dark:block"
-              src="/assets/login-office-dark.jpeg"
-              alt="Office"
-              width={500}
-              height={500}
             />
           </div>
           <div className="flex items-center justify-center p-6 sm:p-12 md:w-1/2">

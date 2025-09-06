@@ -24,6 +24,7 @@ interface CategoryDialogProps {
   handleDialog: () => void;
   form: UseFormReturn<CategorySchemaInfer>;
   onSubmit: (data: CategorySchemaInfer) => Promise<void>;
+  isEdit?: boolean;
 }
 
 const CategoryDialog = ({
@@ -31,6 +32,7 @@ const CategoryDialog = ({
   isOpen,
   form,
   onSubmit,
+  isEdit = false,
 }: CategoryDialogProps) => {
   const {
     handleSubmit,
@@ -40,8 +42,10 @@ const CategoryDialog = ({
     <Dialog open={isOpen} onOpenChange={handleDialog}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Tambah Kategori</DialogTitle>
-          <DialogDescription>Tambah kategori produk</DialogDescription>
+          <DialogTitle> {isEdit ? "Edit" : "Tambah"} Kategori</DialogTitle>
+          <DialogDescription>
+            {isEdit ? "Edit" : "Tambah"} kategori produk inventory
+          </DialogDescription>
           <Form {...form}>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <FormField

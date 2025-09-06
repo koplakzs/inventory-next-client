@@ -25,6 +25,7 @@ export interface CategoryInterface {
   id: number;
   name: string;
 }
+
 export interface ProductInterface {
   id: number;
   name: string;
@@ -53,6 +54,11 @@ export interface LoginInterface {
 
 export interface CategoryInterfacePaginated {
   data: CategoryInterface[];
+  meta: PaginatedInterface;
+}
+
+export interface ProductInterfacePaginated {
+  data: ProductInterface[];
   meta: PaginatedInterface;
 }
 
