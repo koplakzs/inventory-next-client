@@ -5,6 +5,7 @@ import {
   CategoryInterfacePaginated,
   DashboardInterface,
   LoginInterface,
+  ProductInterface,
   ProductInterfacePaginated,
 } from "@/lib/interfaces";
 
@@ -12,7 +13,6 @@ import {
   CategorySchemaInfer,
   LoginSchemaInfer,
   ProductFormType,
-  ProductSchemaInfer,
 } from "@/lib/schema";
 
 export const postLogin = (body: LoginSchemaInfer) =>
@@ -85,7 +85,7 @@ export const getProduct = (token: string, search?: string, page?: number) =>
     "/products/all/paginated",
     {
       params: {
-        row_per_page: 5,
+        row_per_page: 10,
         search,
         page,
       },
@@ -117,6 +117,18 @@ export const putProduct = (token: string, id: number, body: ProductFormType) =>
 
 export const deleteProduct = (token: string, id: number) =>
   clientHttp.delete<ApiInterface>(`/product/${id}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+// Report
+export const getReport = (token: string, start: string, end: string) =>
+  clientHttp.get<ApiInterface<ProductInterface[]>>("/report", {
+    params: {
+      start,
+      end,
+    },
     headers: {
       Authorization: `Bearer ${token}`,
     },

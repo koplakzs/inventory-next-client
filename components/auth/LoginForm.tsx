@@ -36,13 +36,6 @@ const LoginForm = () => {
   const onSubmit = async (data: LoginSchemaInfer) => {
     try {
       const res = await postLogin(data);
-      if (!res.data.success) {
-        setError("root", {
-          type: "server",
-          message: res.data.message,
-        });
-        return;
-      }
       const { user, token } = res.data.data!;
       await setAuthCookies(token, user);
       router.push("/");

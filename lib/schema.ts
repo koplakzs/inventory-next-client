@@ -53,8 +53,14 @@ export const updateProductSchema = productSchema.extend({
     .optional(),
 });
 
+export const reportSchema = z.object({
+  start: z.string().min(1, "Tanggal mulai tidak boleh kosong"),
+  end: z.string().min(1, "Tanggal akhir tidak boleh kosong"),
+});
+
 export type LoginSchemaInfer = z.infer<typeof loginSchema>;
 export type CategorySchemaInfer = z.infer<typeof categorySchema>;
 export type ProductSchemaInfer = z.infer<typeof productSchema>;
 export type UpdateProductSchemaInfer = z.infer<typeof updateProductSchema>;
 export type ProductFormType = ProductSchemaInfer | UpdateProductSchemaInfer;
+export type ReportSchemaInfer = z.infer<typeof reportSchema>;

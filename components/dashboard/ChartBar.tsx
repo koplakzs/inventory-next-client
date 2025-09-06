@@ -5,12 +5,10 @@ import { Bar, BarChart, CartesianGrid, XAxis } from "recharts";
 import {
   ChartConfig,
   ChartContainer,
-  ChartLegend,
-  ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { MonthlyProductResponse } from "@/lib/interfaces";
+import { MonthlyProductInterface } from "@/lib/interfaces";
 
 const chartConfig = {
   month: {
@@ -24,7 +22,7 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 interface ChartBarProps {
-  chartData: MonthlyProductResponse[];
+  chartData: MonthlyProductInterface[];
 }
 
 export function ChartBar({ chartData }: ChartBarProps) {
