@@ -6,14 +6,12 @@ export function middleware(req: NextRequest) {
 
   const protectedRoutes = ["/", "/report", "/category", "/product"];
 
-  if (
-    protectedRoutes.some(
-      (path) => pathname === path || pathname.startsWith(path + "/")
-    )
-  ) {
-    if (!token) {
-      return NextResponse.redirect(new URL("/auth", req.url));
-    }
+  const isProtected = protectedRoutes.some(
+    (path) => pathname === path || pathname.startsWith(`${path}/`)
+  );
+
+  if (isProtected && !token) {
+    return NextResponse.redirect(new URL("/auth", req.url));
   }
 
   if (pathname === "/auth" && token) {
